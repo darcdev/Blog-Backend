@@ -2,9 +2,13 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
+require("express-async-errors");
 const config = require("./utils/config");
 const blogRouter = require("./controller/blog");
+const userRouter = require("./controller/user");
+const loginRouter = require("./controller/login");
 const logger = require("./utils/logger");
+const handleErrors = require("./middlewares/error");
 
 // connect db
 mongoose
@@ -24,5 +28,9 @@ mongoose
 app.use(cors());
 app.use(express.json());
 app.use("/api/blogs", blogRouter);
+app.use("/api/users", userRouter);
+app.use("/auth", loginRouter);
+
+app.use(handleErrors);
 
 module.exports = app;

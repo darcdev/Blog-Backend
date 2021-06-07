@@ -31,6 +31,14 @@ describe("viewing a specific blog", () => {
     const response = await api.get("/api/blogs");
     expect(response.body[0]).toBeDefined();
   });
+});
+
+describe("addition of a new blog", () => {
+  let auth = {};
+
+  beforeAll(async () => {
+    await loginUser(auth);
+  });
 
   test("blog have property like 0 by default ", async () => {
     const newBlog = {
@@ -41,14 +49,13 @@ describe("viewing a specific blog", () => {
     const response = await api
       .post("/api/blogs")
       .send(newBlog)
+      .set("Authorization", "bearer " + auth.token)
       .expect(200)
       .expect("Content-Type", /application\/json/);
 
     expect(response.body.blog.likes).toBe(0);
   });
-});
 
-describe("addition of a new blog", () => {
   test("a new blog can be added", async () => {
     const newBlog = {
       title: "Mr Robot",
@@ -59,6 +66,7 @@ describe("addition of a new blog", () => {
     await api
       .post("/api/blogs")
       .send(newBlog)
+      .set("Authorization", "bearer " + auth.token)
       .expect(200)
       .expect("Content-Type", /application\/json/);
 
@@ -71,6 +79,16 @@ describe("addition of a new blog", () => {
     expect(blogsTitle).toContain("Mr Robot");
   });
 
+  test("a new blog can't be added without token", async () => {
+    const newBlog = {
+      title: "Mr Robot",
+      author: "Michael Jordan",
+      url: "http://www.mrrobot.com",
+      likes: 50,
+    };
+    await api.post("/api/blogs").send(newBlog).expect(401);
+  });
+
   test("blog without title or url is not added", async () => {
     const newBlog = {
       title: "Mr Robot",
@@ -80,6 +98,7 @@ describe("addition of a new blog", () => {
     await api
       .post("/api/blogs")
       .send(newBlog)
+      .set("Authorization", "bearer " + auth.token)
       .expect(400)
       .expect("Content-Type", /application\/json/);
 
@@ -110,11 +129,20 @@ describe("Updating blog", () => {
 });
 
 describe("Deletion of a blog", () => {
+  let auth = {};
+
+  beforeAll(async () => {
+    await loginUser(auth);
+  });
+
   test("blog is deleted with status code 204 if id is valid", async () => {
     const blogsAtStart = await helper.blogsInDb();
     const blogToDelete = blogsAtStart[0];
 
-    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set("Authorization", "bearer " + auth.token);
+    expect(204);
 
     const blogsAtEnd = await helper.blogsInDb();
 
@@ -129,3 +157,16 @@ describe("Deletion of a blog", () => {
 afterAll(() => {
   mongoose.connection.close();
 });
+
+// Functions
+
+async function loginUser(auth) {
+  const response = await api
+    .post("/auth")
+    .send({
+      username: "darcdev",
+      password: "diego",
+    })
+    .expect(200);
+  auth.token = response.body.token;
+}
