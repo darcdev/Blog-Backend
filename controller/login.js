@@ -1,19 +1,19 @@
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const loginRouter = require("express").Router();
-const User = require("../models/user");
-const config = require("../utils/config");
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const loginRouter = require('express').Router();
+const User = require('../models/user');
+const config = require('../utils/config');
 
-loginRouter.post("/", async (request, response) => {
+loginRouter.post('/', async (request, response) => {
   const { username, password } = request.body;
 
   const user = await User.findOne({ username });
   const passwordCorrect = user
     ? await bcrypt.compare(password, user.password)
     : false;
-  if (!(user && passwordCorrect)) {
+  if (!user || !passwordCorrect) {
     return response.status(401).json({
-      error: "invalid username or password",
+      error: 'invalid username or password',
     });
   }
 
@@ -21,7 +21,6 @@ loginRouter.post("/", async (request, response) => {
     username: user.username,
     id: user.id,
   };
-  console.log(config.JWT_SECRET_KEY);
   const token = jwt.sign(dataUserToken, config.JWT_SECRET_KEY);
 
   response
