@@ -7,6 +7,7 @@ const config = require('./utils/config');
 const blogRouter = require('./controller/blog');
 const userRouter = require('./controller/user');
 const loginRouter = require('./controller/login');
+
 const logger = require('./utils/logger');
 const handleErrors = require('./middlewares/error');
 
@@ -30,6 +31,10 @@ app.use(express.json());
 app.use('/api/blogs', blogRouter);
 app.use('/api/users', userRouter);
 app.use('/auth', loginRouter);
+if (process.env.NODE_ENV === 'test') {
+  const testingRouter = require('./controller/testing');
+  app.use('/api/testing', testingRouter);
+}
 
 app.use(handleErrors);
 
